@@ -1,0 +1,27 @@
+﻿@model IEnumerable<GenerateData.Models.HobiModel>
+
+@{
+    ViewData["Title"] = "Privacy Police";
+}
+
+<h1>Privacy</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <!-- Add other headers if needed -->
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var hobi in Model)
+    {
+        <tr>
+            <td>@hobi.Id</td>
+            <td>@hobi.Nama</td>
+            <!-- Add other columns if needed -->
+        </tr>
+    }
+    </tbody>
+</table>

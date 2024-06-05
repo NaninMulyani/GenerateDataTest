@@ -1,0 +1,129 @@
+﻿@model GenerateData.Models.GenerateDataViewModel
+
+@{
+    ViewData["Title"] = "Generate Data Form";
+}
+
+<style>
+    #dataTable {
+        display: none;
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+        #dataTable th, #dataTable td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+</style>
+
+<h2>Generate Data Form</h2>
+
+<button id="generateBtn">Generate Data Form</button>
+<button id="submitBtn" style="display:none;">Submit</button>
+
+<table id="dataTable">
+    <thead>
+        <tr>
+            <th>No</th>
+            <th>Nama</th>
+            <th>Gender</th>
+            <th>Hobi</th>
+            <th>Umur</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+@section scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" />
+
+    <script>
+        $(document).ready(function () {
+            var dataTable;
+            var dataList = []; // Pindahkan deklarasi dataList ke luar click event agar dapat diakses ulang
+            var hobbies = @Html.Raw(Json.Serialize(Model.Hobbies));
+            var genders = @Html.Raw(Json.Serialize(Model.Genders));
+
+            var hobbiesMap = {};
+            hobbies.forEach(function (hobby) {
+                hobbiesMap[hobby.id] = hobby.nama;
+            });
+
+            var gendersMap = {};
+            genders.forEach(function (gender) {
+                gendersMap[gender.id] = gender.nama;
+            });
+
+            $('#generateBtn').click(function () {
+                // Tampilkan overlay loading
+                $('#loadingOverlay').show();
+
+                $.ajax({
+                    url: '/Home/GenerateData',
+                    type: 'POST',
+                    data: { numRecords: 1000 },
+                    success: function (data) {
+                        // Reset dataList dan kosongkan tabel
+                        dataList = [];
+                        $('#dataTable').DataTable().clear().destroy();
+                        $('#dataTable tbody').empty();
+
+                        $.each(data, function (i, item) {
+                            $('#dataTable tbody').append('<tr><td>' + (i + 1) + '</td><td>' + item.nama + '</td><td>' + gendersMap[item.idGender] + '</td><td>' + hobbiesMap[item.idHobi] + '</td><td>' + item.umur + '</td></tr>');
+
+                            dataList.push({
+                                Id: (i + 1),
+                                Nama: item.nama,
+                                IdGender: item.idGender,
+                                IdHobi: item.idHobi.toString(),
+                                Umur: item.umur
+                            });
+                        });
+
+                        // Inisialisasi ulang DataTables dengan data baru
+                        dataTable = $('#dataTable').DataTable();
+                        $('#dataTable').show();
+                        $('#submitBtn').show();
+
+                        // Sembunyikan overlay loading
+                        $('#loadingOverlay').hide();
+                    },
+                    error: function () {
+                        // Sembunyikan overlay loading jika terjadi kesalahan
+                        $('#loadingOverlay').hide();
+                    }
+                });
+            });
+
+            $('#submitBtn').click(function () {
+                // Disable submit button and show loading overlay
+                $('#submitBtn').prop('disabled', true);
+                $('#loadingOverlay').show();
+
+                $.ajax({
+                    url: '/Home/SubmitData',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(dataList),
+                    success: function (response) {
+                        alert(response);
+                        // Enable submit button and hide loading overlay
+                        $('#submitBtn').prop('disabled', false);
+                        $('#loadingOverlay').hide();
+                    },
+                    error: function (error) {
+                        alert("Terjadi kesalahan saat menyimpan data.");
+                        // Enable submit button and hide loading overlay
+                        $('#submitBtn').prop('disabled', false);
+                        $('#loadingOverlay').hide();
+                    }
+                });
+            });
+        });
+
+    </script>
+}
